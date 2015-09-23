@@ -3,6 +3,8 @@
   args:
     name: kubernetes-node
     state: latest
-    enablerepo: "updates-testing"
+    # XXX dnf enablerepo is broken in Ansible 1.9
+    # https://github.com/ansible/ansible-modules-extras/issues/885
+    #enablerepo: "updates-testing"
   notify:
     - restart daemons
