@@ -10,6 +10,14 @@
   tags:
     - pre-ansible
 
+# extra updates / fixes
+- hosts: all
+  sudo: yes
+  roles:
+    - common-extras
+  tags:
+    - common-extras
+
 # Install etcd
 - hosts: etcd
   sudo: yes

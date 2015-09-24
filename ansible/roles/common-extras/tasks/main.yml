@@ -1,0 +1,75 @@
+---
+- name: Init is_fedora and is_fedora22+ facts
+  set_fact:
+    is_fedora: false
+    is_fedora22p: false
+
+- name: Set the is_fedora fact
+  set_fact:
+    is_fedora: true
+  when: not is_atomic and ansible_distribution == "Fedora"
+
+- name: Set the is_fedora22+ fact
+  set_fact:
+    is_fedora22p: true
+  when: not is_atomic and is_fedora
+
+- name: Auto select fastest yum mirror
+  ini_file: dest=/etc/dnf/dnf.conf
+            section=main
+            option=fastestmirror
+            value=1
+            backup=yes
+  when: is_fedora22p
+
+# some tasks fail because local mirror of debug repo is missing
+- name: Determine if cobbler-config.repo exists
+  stat: path=/etc/yum.repos.d/cobbler-config.repo
+  register: cobbler
+  changed_when: false
+  when: is_fedora22p
+
+- name: Disable broken debug mirror
+  ini_file: dest=/etc/yum.repos.d/cobbler-config.repo
+            section=Fedora-22-x86_64-main-debug
+            option=enabled
+            value=0
+            backup=yes
+  when: is_fedora22p and cobbler.stat.exists
+
+# image may be outdated, upgrade all packages
+- name: upgrade all packages
+  action: "{{ ansible_pkg_mgr }}"
+  args:
+    name: "*"
+    state: latest
+  when: is_fedora
+
+# ca script needs tar but it may be missing
+- name: install tar
+  action: "{{ ansible_pkg_mgr }}"
+  args:
+    name: tar
+    state: latest
+
+# install and enforce firewall
+- name: install firewalld
+  action: "{{ ansible_pkg_mgr }}"
+  args:
+    name: firewalld
+    state: latest
+  when: is_fedora
+
+- name: Set the has_firewalld fact
+  set_fact:
+    has_firewalld: true
+  when: is_fedora
+
+- name: enable firewalld
+  service: name=firewalld enabled=yes state=started
+  when: has_firewalld
+
+# delayed until repos fix
+- include: ../../common/tasks/fedora-install.yml
+  when: is_fedora
+
