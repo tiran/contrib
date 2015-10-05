@@ -61,3 +61,11 @@
     - node
   tags:
     - nodes
+
+- hosts: nfs-server
+  sudo: yes
+  roles:
+    - nfs-server
+  tags:
+    - nfs-server
+

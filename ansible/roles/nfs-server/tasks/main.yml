@@ -1,0 +1,45 @@
+---
+- name: Install nfs
+  action: "{{ ansible_pkg_mgr }}"
+  args:
+    name: nfs-utils
+
+- name: Enable rpcbind
+  service: name=rpcbind enabled=yes state=started
+
+- name: Enable nfs-server
+  service: name=nfs-server enabled=yes state=started
+
+- name: Open firewalld port for NFS
+  firewalld: service={{ item }} permanent=false state=enabled
+  with_items:
+    - nfs
+    - rpc-bind
+    - mountd
+
+- name: Save firewalld port for NFS
+  firewalld: service={{ item }} permanent=true state=enabled
+  with_items:
+    - nfs
+    - rpc-bind
+    - mountd
+
+- name: Create kube-vol export directory
+  file:
+      path=/srv/kube-vol
+      mode=777
+      owner=nfsnobody
+      group=nfsnobody
+      state=directory
+
+# insecure,no_root_squash is bad
+# workaround for MySQL image that tries to chown
+- name: Export kube-vol
+  lineinfile:
+      dest=/etc/exports
+      regexp="^/srv/kube-vol"
+      line="/srv/kube-vol {{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}(rw,insecure,sync,no_root_squash,no_all_squash)"
+      state=present
+  notify:
+    - restart nfs-server
+
