@@ -4,17 +4,8 @@ Changes:
 
  MySQL replication controller instead of plain MySQL pod
  NodePort service
-
-Docker Registry
----------------
-
-On master:
-docker run -d -p 5000:5000 --restart=always -v /var/lib/docker-registry:/var/lib/registry -v /etc/kubernetes/certs:/certs:ro -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt -e REGISTRY_HTTP_TLS_KEY=/certs/server.key --name registry registry:2
-
-On all nodes:
-cp /etc/kubernetes/certs/ca.crt /etc/pki/ca-trust/source/anchors/
-update-ca-trust extract
-systemctl restart docker.service
+ Custodia integration
+ custom entry points for go-secret
 
 Custodia setup
 --------------

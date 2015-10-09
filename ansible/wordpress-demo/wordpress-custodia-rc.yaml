@@ -15,7 +15,11 @@ spec:
     spec:
       containers:
         - name: wordpress
-          image: 10.34.78.249:5000/custodia-wordpress
+          image: wordpress
+          # $ docker pull wordpress
+          # $ docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' wordpress
+          command: ["/custodia/go-secret"]
+          args: ["/entrypoint.sh", "apache2-foreground"]
           ports:
           - containerPort: 80
             name: wordpress
@@ -23,6 +27,8 @@ spec:
             - name: CUSTODIA_SECRET_WORDPRESS_DB_PASSWORD
               # change this - must match mysql.yaml password
               value: wordpress/db_password
+            - name: CUSTODIA_REMOTE_USER
+              value: demo
           volumeMounts:
               # name must match the volume name below
             - name: wordpress-persistent-storage
